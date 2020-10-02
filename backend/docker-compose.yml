@@ -1,0 +1,41 @@
+version: '3.8'
+services:
+
+  db:
+    container_name: db
+    image: mysql:5.7
+    volumes:
+        # imports database into the mysql server
+      - ./database/all_rise.sql:/docker-entrypoint-initdb.d/all_rise.sql
+ 
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: all_rise
+    # network_mode: host
+    ports:
+      - "3306:3306"
+    networks:
+      - backend
+
+  back-end:
+    container_name: backend-api
+    entrypoint: ["/wait-for-it.sh", "db:3306", "-t", "120", "--"]
+    depends_on:
+      - db
+    image: allrise-backend
+    environment: 
+             DB_HOST : db
+             DB_PORT : 3306
+             DB_NAME : all_rise  
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    networks:
+      - backend 
+
+networks:
+  backend:
+
+

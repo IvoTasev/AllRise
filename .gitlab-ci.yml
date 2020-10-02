@@ -1,0 +1,60 @@
+image: docker:stable
+services:
+ - docker:dind
+
+variables:
+ DOCKER_DRIVER: overlay
+
+stages:
+ - build_backend
+ - build_frontend
+
+build_backend:
+ stage: build_backend
+ before_script:
+  - cd backend
+ script:
+  - apk add --no-cache curl
+  - docker build
+     --tag $HEROKU_REGISTRY_BIMAGE
+     --file Dockerfile
+     "."
+  - docker login -u _ -p $HEROKU_TOKEN registry.heroku.com
+  - docker push $HEROKU_REGISTRY_BIMAGE
+  - chmod +x ./release.sh
+  - ./release.sh
+ only:
+  - master
+
+build_frontend:
+ stage: build_frontend
+ before_script:
+  - cd allrise
+ script:
+  - apk add --no-cache curl
+  - docker build
+   --tag $HEROKU_REGISTRY_FIMAGE
+   --file Dockerfile
+   "."
+  - docker login -u _ -p $HEROKU_TOKEN registry.heroku.com
+  - docker push $HEROKU_REGISTRY_FIMAGE
+  - chmod +x ./release.sh
+  - ./release.sh
+ only:
+  - master
+
+
+#docker-build-master:
+#  image: docker:latest
+#  stage: build
+#  services:
+#    - docker:dind
+#
+#  before_script:
+#    - docker info
+#
+#  script:
+#    - apk add --no-cache docker-compose
+#    - docker-compose -f docker-compose.yml up
+
+
